@@ -1,0 +1,24 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+
+# Rider / IntelliJ
+.idea/
+*.sln.DotSettings.user
+
+# VS / Rider user-specific
+*.user
+*.suo
+.vs/
+
+# Claude local
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets / local config
+appsettings.*.local.json
+*.env
