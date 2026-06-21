@@ -1,6 +1,35 @@
 @TaskTracker_HostAddress = http://localhost:5289
 
-GET {{TaskTracker_HostAddress}}/weatherforecast/
-Accept: application/json
+###
+PUT {{TaskTracker_HostAddress}}/api/projects/2
+Content-Type: application/json
+
+{
+  "name": "Иванушка",
+  "description": "новое описание еюать его рот"
+}
 
 ###
+POST {{TaskTracker_HostAddress}}/api/TaskItems
+Content-Type: application/json
+
+{
+  "title": "Иванушка1112",
+  "description": "новое описание еюать его рот",
+  "projectId": 2,
+  "status": 2
+}
+
+###
+POST {{TaskTracker_HostAddress}}/api/Auth/register
+Content-Type: application/json
+
+{
+  "username": "asdasdasdadsas4dasd",
+  "password": "1342432234234234243423"
+}
+
+###
+DELETE {{TaskTracker_HostAddress}}/api/TaskItems/2
+Accept: application/json
+
