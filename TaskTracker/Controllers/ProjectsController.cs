@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskTracker.DTOs;
 using TaskTracker.DTOs.Project;
@@ -7,6 +9,7 @@ using TaskTracker.Services.Project;
 namespace TaskTracker.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class ProjectsController : ControllerBase
 {
@@ -38,7 +41,8 @@ public class ProjectsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ProjectReadDto>> Create(ProjectCreateDto dto)
     {
-        var created = await _service.CreateAsync(dto);
+        var ownerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var created = await _service.CreateAsync(dto, ownerId);
 
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }

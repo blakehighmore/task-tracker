@@ -8,9 +8,6 @@ public class ProjectCreateDtoValidator : AbstractValidator<ProjectCreateDto>
 {
     public ProjectCreateDtoValidator()
     {
-        RuleFor(p => p.OwnerId)
-            .GreaterThan(0).WithMessage("Id обладателя проекта должен быть валидным");
-
         RuleFor(p => p.Name)
             .NotEmpty().WithMessage("Название проекта обязательно")
             .MinimumLength(3).WithMessage("Минимальная длина названия 3 символа")

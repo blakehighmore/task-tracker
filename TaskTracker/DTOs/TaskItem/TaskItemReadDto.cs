@@ -1,3 +1,4 @@
+using TaskTracker.DTOs.Label;
 using TaskTracker.Models;
 
 
@@ -9,4 +10,5 @@ public record TaskItemReadDto(
     string? Description,
     TaskItemStatus Status,
     DateTime? DueDate,
-    int ProjectId);
+    int ProjectId,
+    List<LabelReadDto> Labels);

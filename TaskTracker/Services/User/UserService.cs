@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.DTOs.User;
 using TaskTracker.Exceptions;
+using TaskTracker.Services.Auth;
 
 
 namespace TaskTracker.Services.User;
@@ -9,10 +10,12 @@ namespace TaskTracker.Services.User;
 public class UserService : IUserService
 {
     private readonly AppDbContext _db;
+    private readonly IJwtTokenService _tokenService;
 
-    public UserService(AppDbContext db)
+    public UserService(AppDbContext db, IJwtTokenService tokenService)
     {
         _db = db;
+        _tokenService = tokenService;
     }
 
     public async Task<UserReadDto> RegisterAsync(UserRegisterDto dto)
@@ -32,12 +35,12 @@ public class UserService : IUserService
         return new UserReadDto(user.Id, user.Username);
     }
 
-    public async Task<bool> LoginAsync(UserLoginDto dto)
+    public async Task<string?> LoginAsync(UserLoginDto dto)
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == dto.Username);
 
-        if (user is null) throw new NotFoundException("Такого пользователя не существует");
+        if (user is null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash)) return null;
 
-        return BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
+        return _tokenService.GenerateToken(user);
     }
 }

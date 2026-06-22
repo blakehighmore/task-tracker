@@ -62,13 +62,13 @@ public class ProjectService : IProjectService
         return project;
     }
 
-    public async Task<ProjectReadDto> CreateAsync(ProjectCreateDto dto)
+    public async Task<ProjectReadDto> CreateAsync(ProjectCreateDto dto, int ownerId)
     {
         Models.Project project = new()
         {
             Name = dto.Name,
             Description = dto.Description,
-            OwnerId = dto.OwnerId
+            OwnerId = ownerId
         };
         _db.Projects.Add(project);
         await _db.SaveChangesAsync();

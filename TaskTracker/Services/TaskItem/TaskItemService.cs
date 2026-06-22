@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TaskTracker.Data;
 using TaskTracker.DTOs;
+using TaskTracker.DTOs.Label;
 using TaskTracker.DTOs.TaskItem;
 using TaskTracker.Exceptions;
 
@@ -42,7 +43,9 @@ public class TaskItemService : ITaskItemService
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(t =>
-                new TaskItemReadDto(t.Id, t.Title, t.Description, t.Status, t.DueDate, t.ProjectId))
+                new TaskItemReadDto(t.Id, t.Title, t.Description, t.Status, t.DueDate, t.ProjectId,
+                    t.Labels.Select(l => new LabelReadDto(l.Id, l.Name, l.Color))
+                        .ToList()))
             .ToListAsync();
 
         return new PagedResult<TaskItemReadDto>(items, page, pageSize, totalCount);
@@ -54,7 +57,9 @@ public class TaskItemService : ITaskItemService
             .AsNoTracking()
             .Where(t => t.Id == id)
             .Select(t =>
-                new TaskItemReadDto(t.Id, t.Title, t.Description, t.Status, t.DueDate, t.ProjectId))
+                new TaskItemReadDto(t.Id, t.Title, t.Description, t.Status, t.DueDate, t.ProjectId,
+                    t.Labels.Select(l => new LabelReadDto(l.Id, l.Name, l.Color))
+                        .ToList()))
             .FirstOrDefaultAsync();
 
         if (taskItem is null) throw new NotFoundException("Задача не была найдена");
@@ -76,7 +81,7 @@ public class TaskItemService : ITaskItemService
         await _db.SaveChangesAsync();
 
         return new TaskItemReadDto(taskItem.Id, taskItem.Title, taskItem.Description, taskItem.Status, taskItem.DueDate,
-            taskItem.ProjectId);
+            taskItem.ProjectId, []);
     }
 
     public async Task<bool> UpdateAsync(int id, TaskItemUpdateDto dto)
@@ -101,6 +106,43 @@ public class TaskItemService : ITaskItemService
         if (taskItem is null) return false;
 
         _db.TaskItems.Remove(taskItem);
+        await _db.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> AddLabelAsync(int taskId, int labelId)
+    {
+        var task = await _db.TaskItems.Include(t => t.Labels)
+            .FirstOrDefaultAsync(t => t.Id == taskId);
+
+        if (task is null) return false;
+
+        var label = await _db.Labels.FindAsync(labelId);
+
+        if (label is null) return false;
+
+        if (task.Labels.Any(l => l.Id == labelId)) return true;
+
+        task.Labels.Add(label);
+        await _db.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> RemoveLabelAsync(int taskId, int labelId)
+    {
+        var task = await _db.TaskItems
+            .Include(t => t.Labels)
+            .FirstOrDefaultAsync(t => t.Id == taskId);
+
+        if (task is null) return false;
+
+        var label = task.Labels.FirstOrDefault(l => l.Id == labelId);
+
+        if (label is null) return false;
+
+        task.Labels.Remove(label);
         await _db.SaveChangesAsync();
 
         return true;

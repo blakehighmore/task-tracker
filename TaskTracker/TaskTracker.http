@@ -1,35 +1,172 @@
 @TaskTracker_HostAddress = http://localhost:5289
 
-###
-PUT {{TaskTracker_HostAddress}}/api/projects/2
+###############################################
+# AUTH (открытые эндпоинты — без токена)
+###############################################
+
+### Регистрация
+POST {{TaskTracker_HostAddress}}/api/auth/register
 Content-Type: application/json
 
 {
-  "name": "Иванушка",
-  "description": "новое описание еюать его рот"
+  "username": "demo",
+  "password": "secret123"
 }
 
-###
-POST {{TaskTracker_HostAddress}}/api/TaskItems
+### Логин — токен сохраняется в глобальную переменную {{token}} скриптом ниже
+# @name login
+POST {{TaskTracker_HostAddress}}/api/auth/login
 Content-Type: application/json
 
 {
-  "title": "Иванушка1112",
-  "description": "новое описание еюать его рот",
-  "projectId": 2,
-  "status": 2
+  "username": "demo",
+  "password": "secret123"
 }
 
-###
-POST {{TaskTracker_HostAddress}}/api/Auth/register
+> {%
+    // выполняется ПОСЛЕ ответа: кладём токен в {{token}} для защищённых запросов
+    client.global.set("token", response.body.token);
+%}
+
+### Логин с НЕВЕРНЫМ паролем (ждём 401, без утечки)
+POST {{TaskTracker_HostAddress}}/api/auth/login
 Content-Type: application/json
 
 {
-  "username": "asdasdasdadsas4dasd",
-  "password": "1342432234234234243423"
+  "username": "demo",
+  "password": "WRONG"
 }
 
-###
-DELETE {{TaskTracker_HostAddress}}/api/TaskItems/2
-Accept: application/json
 
+###############################################
+# PROJECTS  (требуют токен — [Authorize])
+###############################################
+
+### Без токена → 401 (проверь, что защита работает)
+GET {{TaskTracker_HostAddress}}/api/projects
+
+### Все проекты (с токеном)
+GET {{TaskTracker_HostAddress}}/api/projects?page=1&pageSize=10&sortBy=name&desc=false
+Authorization: Bearer {{token}}
+
+### Проект по id
+GET {{TaskTracker_HostAddress}}/api/projects/1
+Authorization: Bearer {{token}}
+
+### Создать проект
+POST {{TaskTracker_HostAddress}}/api/projects
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Мой проект",
+  "description": "описание",
+  "ownerId": 1
+}
+
+### Невалидно — пустой Name (ждём 400)
+POST {{TaskTracker_HostAddress}}/api/projects
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "",
+  "description": null,
+  "ownerId": 1
+}
+
+### Обновить проект
+PUT {{TaskTracker_HostAddress}}/api/projects/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Переименованный проект",
+  "description": "новое описание"
+}
+
+### Удалить проект
+DELETE {{TaskTracker_HostAddress}}/api/projects/1
+Authorization: Bearer {{token}}
+
+
+###############################################
+# TASK ITEMS  (status: 0=Todo, 1=InProgress, 2=Done)
+###############################################
+
+### Все задачи
+GET {{TaskTracker_HostAddress}}/api/taskitems?page=1&pageSize=10
+Authorization: Bearer {{token}}
+
+### Задача по id (в ответе labels[])
+GET {{TaskTracker_HostAddress}}/api/taskitems/1
+Authorization: Bearer {{token}}
+
+### Создать задачу
+POST {{TaskTracker_HostAddress}}/api/taskitems
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Новая задача в работе",
+  "description": null,
+  "status": 0,
+  "dueDate": null,
+  "projectId": 1
+}
+
+### Невалидно — status вне enum (ждём 400)
+POST {{TaskTracker_HostAddress}}/api/taskitems
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Задача с битым статусом",
+  "description": null,
+  "status": 5,
+  "dueDate": null,
+  "projectId": 1
+}
+
+### Обновить задачу
+PUT {{TaskTracker_HostAddress}}/api/taskitems/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Обновлённая задача",
+  "description": "теперь с описанием",
+  "status": 1,
+  "dueDate": null
+}
+
+### Удалить задачу
+DELETE {{TaskTracker_HostAddress}}/api/taskitems/1
+Authorization: Bearer {{token}}
+
+
+###############################################
+# LABELS + привязка к задачам (many-to-many)
+###############################################
+
+### Все метки
+GET {{TaskTracker_HostAddress}}/api/labels
+Authorization: Bearer {{token}}
+
+### Создать метку
+POST {{TaskTracker_HostAddress}}/api/labels
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "срочное",
+  "color": "red"
+}
+
+### Привязать метку к задаче: /api/taskitems/{taskId}/labels/{labelId}
+POST {{TaskTracker_HostAddress}}/api/taskitems/1/labels/1
+Authorization: Bearer {{token}}
+
+### Отвязать метку от задачи
+DELETE {{TaskTracker_HostAddress}}/api/taskitems/1/labels/1
+Authorization: Bearer {{token}}

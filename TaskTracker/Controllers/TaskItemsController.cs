@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskTracker.DTOs;
 using TaskTracker.DTOs.TaskItem;
@@ -7,6 +8,7 @@ using TaskTracker.Services.TaskItem;
 namespace TaskTracker.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class TaskItemsController : ControllerBase
 {
@@ -61,4 +63,12 @@ public class TaskItemsController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPost("{taskId:int}/labels/{labelId:int}")]
+    public async Task<IActionResult> AddLabel(int taskId, int labelId) =>
+        await _service.AddLabelAsync(taskId, labelId) ? NoContent() : NotFound();
+
+    [HttpDelete("{taskId:int}/labels/{labelId:int}")]
+    public async Task<IActionResult> RemoveLabel(int taskId, int labelId) =>
+        await _service.RemoveLabelAsync(taskId, labelId) ? NoContent() : NotFound();
 }

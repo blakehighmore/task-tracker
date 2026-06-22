@@ -25,10 +25,10 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(UserLoginDto dto)
     {
-        var isLogin = await _service.LoginAsync(dto);
+        var token = await _service.LoginAsync(dto);
 
-        if (!isLogin) return NotFound();
+        if (token is null) return Unauthorized();
 
-        return Ok();
+        return Ok(new { token });
     }
 }

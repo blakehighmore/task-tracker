@@ -11,4 +11,6 @@ public interface ITaskItemService
     public Task<TaskItemReadDto> CreateAsync(TaskItemCreateDto dto);
     public Task<bool> UpdateAsync(int id, TaskItemUpdateDto dto);
     public Task<bool> DeleteAsync(int id);
+    public Task<bool> AddLabelAsync(int taskId, int labelId);
+    public Task<bool> RemoveLabelAsync(int taskId, int labelId);
 }
